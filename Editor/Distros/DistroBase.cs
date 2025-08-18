@@ -171,12 +171,12 @@ public abstract class DistroBase : BatchItem
             // Check that all builds are present
             var paths = GetBuildPaths();
             if (!paths.Any())
-                throw new Exception(name + ": Distribution has no targets in any of its profiles");
+                throw new Exception($"{name}: Distribution has no targets in any of its profiles");
 
             var missingBuilds = false;
             foreach (var path in paths) {
                 if (path.path == null) {
-                    Debug.LogError(name + ": Missing build for target '" + path.target + "' of profile '" + path.profile + "'");
+                    Debug.LogError($"{name}: Missing build for target '{path.target}' of profile '{path.profile}'", this);
                     missingBuilds = true;
                 }
             }
@@ -185,6 +185,8 @@ public abstract class DistroBase : BatchItem
 
             // Run distribution
             await RunDistribute(paths, task);
+
+            Debug.Log($"{name}: Completed successfully", this);
         } finally {
             EditorApplication.UnlockReloadAssemblies();
 

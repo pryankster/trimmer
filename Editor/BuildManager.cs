@@ -143,7 +143,7 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
 
         var option = CurrentProfile.EditProfile.GetOption(optionPath);
         if (option == null) {
-            Debug.LogWarning($"BuildManager.GetCurrentInclusion: Could not find option for path '{optionPath}'");
+            Debug.LogWarning($"BuildManager.GetCurrentInclusion: Could not find option for path '{optionPath}'", CurrentProfile);
             return OptionInclusion.Remove;
         }
 
@@ -290,17 +290,16 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
     /// </summary>
     static void NonTrimmerBuild(BuildTarget target)
     {
+        Debug.LogWarning($"Trimmer: Build started using an unsupported method, some Trimmer features will not work.");
+
         BuildType = TrimmerBuildType.NonTrimmer;
         CurrentProfile = EditorProfile.Instance.ActiveProfile;
-
-        Debug.LogWarning($"Trimmer: Build started using an unsupported method, some Trimmer features will not work.");
+        OptionHelper.currentBuildOptions = default;
 
         // We can only react when the build has already started and cannot
         // edit BuildPlayerOptions.extraScriptingDefines, so we have to
         // change PlayerSettings.
         ApplyScriptingDefineSymbolsToPlayerSettings(CurrentProfile, target);
-
-        OptionHelper.currentBuildOptions = default;
     }
 
     /// <summary>
@@ -456,7 +455,7 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
             if (onComplete != null) {
                 onComplete.OnComplete(false, new[] { ProfileBuildResult.Error(profile, err) });
             } else {
-                Debug.LogError(err);
+                Debug.LogError(err, profile);
             }
             return;
         }
@@ -563,7 +562,7 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
         if (report.summary.result != BuildResult.Succeeded) {
             OnBuildError(report);
         } else {
-            Debug.Log(string.Format("Trimmer: Built {0} to '{1}'", options.target, options.locationPathName));
+            Debug.Log(string.Format("Trimmer: Built {0} to '{1}'", options.target, options.locationPathName), buildProfile);
             buildProfile.SetLastBuildPath(options.target, options.locationPathName);
         }
 
@@ -899,7 +898,7 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
         ResetBuildTypeAndOptionsAfterBuild();
 
         if (report != null) {
-            Debug.LogError($"Trimmer: Build failed for platform {target}");
+            Debug.LogError($"Trimmer: Build failed for platform {target}", CurrentProfile);
         }
     }
 
