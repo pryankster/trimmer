@@ -42,9 +42,14 @@ namespace sttz.Trimmer.Editor
 /// the build, assets inside the script folder or files in the Unity project.
 /// 
 /// Supported variables:
-/// - `{{BuiltTarget}}`: Path to the last build of the given target
-/// - `{{project}}`: Path to the Unity project root
-/// - `{{scripts}}`: Path to the original scripts folder
+/// - `{{BuildTarget}}`: Path to the last build of the given target
+/// - `{{Project}}`: Path to the Unity project root
+/// - `{{Scripts}}`: Path to the original scripts folder
+/// - `{{Description}}`: Custom string set as <see cref="description"/>
+/// - `{{Version}}`: `Application.version` string
+/// - `{{ProductName}}`: `Application.productName` string
+/// - `{{CompanyName}}`: `Application.companyName` string
+/// - `{{UnityVersion}}`: `Application.unityVersion` string
 /// 
 /// The `{{BuildTarget}}` variables come from the given Build Profiles. Adding a 
 /// variable from a build target that doesn't exist in any Build Profile will 
@@ -72,6 +77,10 @@ public class SteamDistro : DistroBase
     /// Main app VDF script file.
     /// </summary>
     public string appScript;
+    /// <summary>
+    /// Custom string to fill as `{{Description}}` variable.
+    /// </summary>
+    public string description;
 
     /// <summary>
     /// Notarize macOS build.
@@ -285,12 +294,17 @@ public class SteamDistro : DistroBase
             var contents = PathVarRegex.Replace(File.ReadAllText(file), (match) => {
                 var platformName = match.Groups[1].Value.ToLower();
 
-                if (platformName == "project") {
-                    return Path.GetDirectoryName(Application.dataPath);
-                } else if (platformName == "scripts") {
-                    return Path.GetFullPath(scriptsFolder);
+                // Handle static variables
+                switch (platformName) {
+                    case "project":      return Path.GetDirectoryName(Application.dataPath);
+                    case "scripts":      return Path.GetFullPath(scriptsFolder);
+                    case "version":      return Application.version;
+                    case "productname":  return Application.productName;
+                    case "companyname":  return Application.companyName;
+                    case "unityversion": return Application.unityVersion;
                 }
 
+                // Handle build path variables
                 BuildTarget target;
                 try {
                     target = (BuildTarget)Enum.Parse(typeof(BuildTarget), platformName, true);
