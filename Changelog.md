@@ -1,5 +1,13 @@
 # Changelog
 
+### 2.0.0-pre.18 (2025-08-18)
+* Add support for `PrepareForBuild` callback in Options (to dynamically add streaming assets)
+* Prevent computer idle sleep while a distro is running (not implemented for Linux)
+* ItchDistro: Add support for uploading web builds
+* SteamDistro: Add more variables to fill into `desc` of build script
+* Make accessing `BuildManager` variables more predictable in `PostProcessBuild` callbacks
+* Make more log messages clickable to ping build profile or distro responsible
+
 ### 2.0.0-pre.17 (2025-02-09)
 * SteamDistro: Set $HOME to separate session from Steam client
 * Add `IEditorProfile.IsEditorProfile` to check if option is part of the EditorProfile or a BuildProfile in the editor
