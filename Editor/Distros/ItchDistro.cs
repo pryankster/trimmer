@@ -51,6 +51,7 @@ public class ItchDistro : DistroBase
         { BuildTarget.StandaloneWindows64, "win64" },
         { BuildTarget.StandaloneLinux64, "linux64" },
         { BuildTarget.Android, "android" },
+        { BuildTarget.WebGL, "web" },
         #if !UNITY_2019_2_OR_NEWER
         { BuildTarget.StandaloneLinux, "linux32" },
         { BuildTarget.StandaloneLinuxUniversal, "linux" },
