@@ -600,9 +600,85 @@ public static class OptionHelper
         return buildPath;
     }
 
+    // -------- Prevent Sleep --------
+
+    /// <summary>
+    /// Prevent them computer from going to sleep.
+    /// </summary>
+    /// <remarks>
+    /// The returned object needs to be disposed to allow sleep again.
+    /// The method returns `null` if preventing sleep is not supported.
+    /// </remarks>
+    public static IDisposable PreventSleep()
+    {
+    #if UNITY_EDITOR_OSX
+        return new SleepPreventerMac();
+    #elif UNITY_EDITOR_WIN
+        return new SleepPreventerWin();
+    #else
+        // Not supported
+        return null;
+    #endif
+    }
+
+#if UNITY_EDITOR_OSX
+    /// <summary>
+    /// Prevent sleep on macOS using built-in `caffeinate` command-line utility.
+    /// </summary>
+    class SleepPreventerMac : IDisposable
+    {
+        System.Diagnostics.Process process;
+
+        public SleepPreventerMac()
+        {
+            process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = "/usr/bin/caffeinate";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+        }
+
+        public void Dispose()
+        {
+            if (process == null)
+                return;
+
+            if (!process.HasExited) {
+                process.Kill();
+            }
+
+            process.Dispose();
+            process = null;
+        }
+    }
 #endif
 
-}
+#if UNITY_EDITOR_WIN
+    /// <summary>
+    /// Prevent sleep on Windows using `SetThreadExecutionState()`.
+    /// </summary>
+    class SleepPreventerWin : IDisposable
+    {
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
+        public static extern uint SetThreadExecutionState(uint esFlags);
+
+        public SleepPreventerWin()
+        {
+            // ES_CONTINUOUS & ES_SYSTEM_REQUIRED
+            SetThreadExecutionState(0x80000000 & 0x00000001);
+        }
+
+        public void Dispose()
+        {
+            // ES_CONTINUOUS
+            SetThreadExecutionState(0x80000000);
+        }
+    }
+#endif
+
+#endif
+
+    }
 
 }
 

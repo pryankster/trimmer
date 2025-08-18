@@ -150,10 +150,9 @@ public abstract class DistroBase : BatchItem
             // Set up default cancelable progress task if none is given
             removeProgressTask = true;
 
-            task.taskId = Progress.Start(name);
-
             var source = new CancellationTokenSource();
-            task.cancellation = source.Token;
+
+            task = TaskToken.Start(name, source.Token);
 
             Progress.RegisterCancelCallback(task.taskId, () => {
                 source.Cancel();
@@ -161,9 +160,13 @@ public abstract class DistroBase : BatchItem
             });
         }
 
+        IDisposable preventSleep = null;
         try {
             // Prevent domain reloads from stopping the distribution
             EditorApplication.LockReloadAssemblies();
+
+            // Don't let computer sleep while distro is running
+            preventSleep = OptionHelper.PreventSleep();
 
             // Check that all builds are present
             var paths = GetBuildPaths();
@@ -184,6 +187,8 @@ public abstract class DistroBase : BatchItem
             await RunDistribute(paths, task);
         } finally {
             EditorApplication.UnlockReloadAssemblies();
+
+            preventSleep?.Dispose();
 
             if (removeProgressTask) {
                 task.Remove();
