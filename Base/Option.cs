@@ -527,6 +527,36 @@ public abstract class Option
     }
 
     /// <summary>
+    /// Callback invoked before a build starts,
+    /// with access to the <see cref="UnityEditor.Build.BuildPlayerContext"/>.
+    /// </summary>
+    /// <remarks>
+    /// In contrast to <see cref="PrepareBuild"/>, this method does not allow modifying
+    /// <see cref="BuildPlayerOptions"/>.
+    /// Currently its main use is to dynamically add streaming assets to a build
+    /// using <see cref="UnityEditor.Build.BuildPlayerContext.AddAdditionalPathToStreamingAssets"/>.
+    /// 
+    /// > [!NOTE]
+    /// > This method is only available in the editor.
+    /// </remarks>
+    /// <param name="context">The build context for the current build</param>
+    /// <param name="inclusion">Wether the Option is included in the  build</param>
+    public virtual void PrepareForBuildWithContext(UnityEditor.Build.BuildPlayerContext context, OptionInclusion inclusion)
+    {
+        if (variants != null) {
+            foreach (var variant in variants) {
+                variant.PrepareForBuildWithContext(context, inclusion);
+            }
+        }
+
+        if (children != null) {
+            foreach (var child in children) {
+                child.PrepareForBuildWithContext(context, inclusion);
+            }
+        }
+    }
+
+    /// <summary>
     /// Callback invoked right before a build.
     /// </summary>
     /// <remarks>

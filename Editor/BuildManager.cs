@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.Callbacks;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -85,7 +86,7 @@ public enum TrimmerBuildType
 /// The Build Manager controls the build process and calls the Option's
 /// callbacks.
 /// </summary>
-public class BuildManager : IProcessSceneWithReport, IPreprocessBuildWithReport, IPostprocessBuildWithReport
+public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPreprocessBuildWithReport, IPostprocessBuildWithReport
 {
     /// <summary>
     /// Scripting define symbol added to remove Trimmer code in player.
@@ -795,8 +796,6 @@ public class BuildManager : IProcessSceneWithReport, IPreprocessBuildWithReport,
     static string[] previousScriptingDefineSymbols;
     static bool includesAnyOption;
 
-    public int callbackOrder { get { return 0; } }
-
     [InitializeOnLoadMethod]
     static void RegisterBuildPlayerHandler()
     {
@@ -862,9 +861,26 @@ public class BuildManager : IProcessSceneWithReport, IPreprocessBuildWithReport,
                 .Select(o => o.Name)
                 .Join(),
             defines
-        ));
+        ), CurrentProfile);
     }
-    
+
+    public override void PrepareForBuild(BuildPlayerContext buildPlayerContext)
+    {
+        try {
+            // Run options' PrepareForBuildWithContext
+            var buildTarget = buildPlayerContext.BuildPlayerOptions.target;
+            foreach (var option in GetCurrentEditProfile().OrderBy(o => o.PostprocessOrder)) {
+                if ((option.Capabilities & OptionCapabilities.ConfiguresBuild) == 0) continue;
+                var inclusion = CurrentProfile == null ? OptionInclusion.Remove : CurrentProfile.GetInclusionOf(option, buildTarget);
+                option.PrepareForBuildWithContext(buildPlayerContext, inclusion);
+            }
+        }
+        catch (Exception) {
+            OnBuildError(null);
+            throw;
+        }
+    }
+
     // Unfortunately not a proper Unity event
     public static void OnBuildError([CanBeNull] BuildReport report)
     {
