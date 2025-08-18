@@ -567,8 +567,7 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
             buildProfile.SetLastBuildPath(options.target, options.locationPathName);
         }
 
-        CurrentProfile = null;
-        OptionHelper.currentBuildOptions = default;
+        ResetBuildTypeAndOptionsAfterBuild();
         return report;
     }
 
@@ -897,8 +896,7 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
         }
 
         RestoreScriptingDefineSymbolsInPlayerSettings(target);
-        OptionHelper.currentBuildOptions = default;
-        BuildType = TrimmerBuildType.None;
+        ResetBuildTypeAndOptionsAfterBuild();
 
         if (report != null) {
             Debug.LogError($"Trimmer: Build failed for platform {target}");
@@ -917,8 +915,22 @@ public class BuildManager : BuildPlayerProcessor, IProcessSceneWithReport, IPrep
         }
 
         RestoreScriptingDefineSymbolsInPlayerSettings(target);
+    }
+
+    // Call this very late after a successful build,
+    // so that other PostProcessBuild-callbacks can still
+    // access the type/profile/options of the build.
+    [PostProcessBuild(1000000)]
+    static void OnPostProcessBuild(BuildTarget target, string path)
+    {
+        ResetBuildTypeAndOptionsAfterBuild();
+    }
+
+    static void ResetBuildTypeAndOptionsAfterBuild()
+    {
         OptionHelper.currentBuildOptions = default;
         BuildType = TrimmerBuildType.None;
+        CurrentProfile = null;
     }
 
     public void OnProcessScene(Scene scene, [CanBeNull] BuildReport report)
