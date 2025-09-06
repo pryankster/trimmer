@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -288,17 +289,18 @@ public class ZipDistro : DistroBase
         argv.Add("a");
         argv.Add(outputPath);
         argv.Add(inputName);
-        argv.Add(((int)compression).ToString());
+        argv.Add($"-mx{(int)compression}");
         
         foreach (var pattern in ZipIgnore) {
-            argv.Add(@" -xr!" + pattern);
+            argv.Add(@"-xr!" + pattern);
         }
 
         startInfo.FileName = sevenZPath;
         startInfo.WorkingDirectory = Path.GetDirectoryName(basePath);
         startInfo.UseShellExecute = false;
 
-        task.Report(0, description: $"Archiving {inputName}");
+        var argvStr = String.Join("> <", argv.ToArray());
+        task.Report(0, description: $"Archiving {inputName}: <{argvStr}>");
 
         await Execute(new ExecutionArgs() { startInfo = startInfo }, task);
 
