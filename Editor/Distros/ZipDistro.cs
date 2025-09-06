@@ -4,10 +4,8 @@
 //
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -299,7 +297,7 @@ public class ZipDistro : DistroBase
         startInfo.WorkingDirectory = Path.GetDirectoryName(basePath);
         startInfo.UseShellExecute = false;
 
-        var argvStr = String.Join("> <", argv.ToArray());
+        var argvStr = String.Join("> <", argv);
         task.Report(0, description: $"Archiving {inputName}: <{argvStr}>");
 
         await Execute(new ExecutionArgs() { startInfo = startInfo }, task);
